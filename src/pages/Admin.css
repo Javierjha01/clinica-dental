@@ -100,7 +100,60 @@
   box-shadow: 0 0 0 3px rgba(30, 90, 142, 0.12);
 }
 
-.admin-login-card form button {
+.admin-login-password-wrap {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  margin-bottom: 1rem;
+  border: 1px solid var(--color-borde);
+  border-radius: 12px;
+  background: var(--color-blanco);
+  transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
+  min-height: 48px;
+}
+
+.admin-login-password-wrap:focus-within {
+  border-color: var(--color-azul);
+  box-shadow: 0 0 0 3px rgba(30, 90, 142, 0.12);
+}
+
+.admin-login-password-wrap input {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  border: none;
+  border-radius: 11px 0 0 11px;
+  padding: 0.75rem 0.5rem 0.75rem 1rem;
+  font-size: inherit;
+  background: transparent;
+}
+
+.admin-login-password-wrap input:focus {
+  box-shadow: none;
+  outline: none;
+}
+
+.admin-login-password-toggle {
+  flex-shrink: 0;
+  width: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-left: 1px solid var(--color-borde);
+  background: transparent;
+  color: var(--color-texto-suave);
+  border-radius: 0 11px 11px 0;
+  cursor: pointer;
+  transition: color 0.2s var(--ease), background 0.2s var(--ease);
+}
+
+.admin-login-password-toggle:hover {
+  color: var(--color-azul);
+  background: rgba(30, 90, 142, 0.06);
+}
+
+.admin-login-card form button[type="submit"] {
   width: 100%;
   padding: 0.85rem;
   border: none;
@@ -113,7 +166,7 @@
   transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
 }
 
-.admin-login-card form button:hover {
+.admin-login-card form button[type="submit"]:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 16px rgba(30, 90, 142, 0.35);
 }
@@ -237,6 +290,140 @@
   gap: 1rem;
 }
 
+.admin-notif-wrap {
+  position: relative;
+}
+
+.admin-notif-campana {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--color-texto);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s var(--ease), color 0.2s var(--ease);
+}
+
+.admin-notif-campana:hover {
+  background: var(--color-azul-suave);
+  color: var(--color-azul);
+}
+
+.admin-notif-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #b91c1c;
+  color: var(--color-blanco);
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: 9px;
+  line-height: 1;
+}
+
+.admin-notif-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 320px;
+  max-height: 400px;
+  background: var(--color-blanco);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  border: 1px solid var(--color-borde);
+  z-index: 100;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-notif-dropdown-titulo {
+  padding: 0.85rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-texto);
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.admin-notif-vacio {
+  padding: 1.5rem 1rem;
+  font-size: 0.875rem;
+  color: var(--color-texto-suave);
+  text-align: center;
+  margin: 0;
+}
+
+.admin-notif-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  max-height: 320px;
+}
+
+.admin-notif-item {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: none;
+  text-align: left;
+  font-size: 0.85rem;
+  color: var(--color-texto);
+  cursor: pointer;
+  transition: background 0.2s var(--ease);
+  position: relative;
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.admin-notif-item:hover {
+  background: var(--color-azul-suave);
+}
+
+.admin-notif-item.leida {
+  opacity: 0.75;
+}
+
+.admin-notif-item-titulo {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.admin-notif-item-mensaje {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--color-texto-suave);
+  margin-bottom: 0.2rem;
+}
+
+.admin-notif-item-fecha {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--color-texto-suave);
+}
+
+.admin-notif-item-punto {
+  position: absolute;
+  top: 0.75rem;
+  right: 1rem;
+  width: 8px;
+  height: 8px;
+  background: var(--color-azul);
+  border-radius: 50%;
+}
+
 .admin-email {
   font-size: 0.8rem;
   color: var(--color-texto-suave);
@@ -321,6 +508,46 @@
 }
 
 /* ---- Calendario (grande y centrado) ---- */
+.admin-calendario-error {
+  margin-bottom: 1rem;
+  padding: 1rem 1.25rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  color: #b91c1c;
+}
+
+.admin-calendario-error p {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.admin-calendario-error-ayuda {
+  margin-bottom: 0.75rem !important;
+  font-size: 0.8rem !important;
+  font-weight: 400 !important;
+  color: #991b1b !important;
+  opacity: 0.95;
+}
+
+.admin-btn-reintentar {
+  padding: 0.5rem 1rem;
+  border: 1px solid #b91c1c;
+  background: var(--color-blanco);
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #b91c1c;
+  cursor: pointer;
+  transition: background 0.2s var(--ease), color 0.2s var(--ease);
+}
+
+.admin-btn-reintentar:hover {
+  background: #b91c1c;
+  color: var(--color-blanco);
+}
+
 .admin-calendario-wrap {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: saturate(180%) blur(8px);
@@ -399,8 +626,10 @@
   cursor: pointer;
   transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 2px;
 }
 
 .admin-cal-celda.vacia {
@@ -428,6 +657,19 @@
 .admin-cal-celda.con-cita:hover:not(.pasado) {
   transform: scale(1.05);
   box-shadow: 0 2px 12px rgba(180, 83, 9, 0.25);
+}
+
+.admin-cal-celda-num {
+  line-height: 1;
+}
+
+.admin-cal-celda-punto {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.9;
+  flex-shrink: 0;
 }
 
 .admin-cal-celda.pasado {

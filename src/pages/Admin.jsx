@@ -1,10 +1,11 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { db } from '../lib/firebase'
+import app from '../lib/firebase'
 import { collection, doc, query, where, orderBy, limit, onSnapshot, updateDoc } from 'firebase/firestore'
-import { COLLECTIONS, ESTADOS_CITA } from '../lib/firestore'
-import { getActividades, updateActividades, deleteExpediente, reagendarCita, getHorariosOcupados } from '../lib/citasApi'
+import { COLLECTIONS, ESTADOS_CITA, SUBCOL_NOTIFICACIONES } from '../lib/firestore'
+import { getActividades, updateActividades, deleteExpediente, reagendarCita, getHorariosOcupados, ensureAdminDoc, setAdminFcmToken, marcarNotificacionLeida } from '../lib/citasApi'
 import './Admin.css'
 
 const DIAS_SEMANA = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
@@ -66,6 +67,7 @@ function Admin() {
   const { user, loading: authLoading, signIn, signOut } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [loginError, setLoginError] = useState('')
 
   const [seccion, setSeccion] = useState('citas')
@@ -91,7 +93,12 @@ function Admin() {
   const [selectedExpediente, setSelectedExpediente] = useState(null)
   const [busquedaExpediente, setBusquedaExpediente] = useState('')
   const [loadingCitas, setLoadingCitas] = useState(false)
+  const [errorCitasCalendario, setErrorCitasCalendario] = useState(null)
+  const [retryCalendario, setRetryCalendario] = useState(0)
   const [actualizandoAsistio, setActualizandoAsistio] = useState(null)
+  const [notificaciones, setNotificaciones] = useState([])
+  const [notifDropdownAbierto, setNotifDropdownAbierto] = useState(false)
+  const notifDropdownRef = useRef(null)
 
   const { inicio: mesInicio, fin: mesFin } = getMonthRange(mesCalendario)
 
@@ -111,22 +118,26 @@ function Admin() {
       (snap) => {
         setCitasMes(snap.docs.map((doc) => ({ id: doc.id, ...doc.data() })))
         setLoadingCitas(false)
+        setErrorCitasCalendario(null)
       },
       (err) => {
         setLoadingCitas(false)
-        console.error(err)
+        setErrorCitasCalendario(err?.message || 'Error al cargar citas')
+        console.error('Calendario citas:', err)
       }
     )
     return () => unsub()
-  }, [user, mesInicio, mesFin])
+  }, [user, mesInicio, mesFin, retryCalendario])
 
   useEffect(() => {
     if (!user) return
     const ref = collection(db, COLLECTIONS.CITAS)
     const q = query(ref, orderBy('fecha', 'desc'), limit(500))
-    const unsub = onSnapshot(q, (snap) => {
-      setCitasRecientes(snap.docs.map((doc) => ({ id: doc.id, ...doc.data() })))
-    })
+    const unsub = onSnapshot(
+      q,
+      (snap) => setCitasRecientes(snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }))),
+      (err) => console.error('Citas recientes:', err)
+    )
     return () => unsub()
   }, [user])
 
@@ -186,6 +197,47 @@ function Admin() {
     if (!fechaReagendar || !horaReagendar) return
     if (esHorarioPasado(fechaReagendar, horaReagendar)) setHoraReagendar('')
   }, [fechaReagendar, horaReagendar])
+
+  useEffect(() => {
+    if (!user) {
+      setNotificaciones([])
+      return
+    }
+    ensureAdminDoc().catch(() => {})
+    const ref = collection(db, COLLECTIONS.ADMINS, user.uid, SUBCOL_NOTIFICACIONES)
+    const q = query(ref, orderBy('createdAt', 'desc'), limit(50))
+    const unsub = onSnapshot(q, (snap) => {
+      setNotificaciones(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
+    })
+    return () => unsub()
+  }, [user])
+
+  useEffect(() => {
+    if (!user || typeof window === 'undefined' || !('Notification' in window)) return
+    const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY
+    if (!vapidKey) return
+    Notification.requestPermission().then((perm) => {
+      if (perm !== 'granted') return
+      import('firebase/messaging').then(({ getMessaging, getToken }) => {
+        const messaging = getMessaging(app)
+        getToken(messaging, { vapidKey })
+          .then((token) => setAdminFcmToken(token))
+          .catch((err) => {
+            console.warn('Push: no se pudo obtener el token. Revisa que public/firebase-messaging-sw.js tenga la config de tu proyecto.', err)
+          })
+      })
+    })
+  }, [user])
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (notifDropdownRef.current && !notifDropdownRef.current.contains(e.target)) {
+        setNotifDropdownAbierto(false)
+      }
+    }
+    if (notifDropdownAbierto) document.addEventListener('click', handleClickOutside)
+    return () => document.removeEventListener('click', handleClickOutside)
+  }, [notifDropdownAbierto])
 
   const eliminarExpedienteConfirmar = async () => {
     if (!selectedExpediente) return
@@ -349,12 +401,34 @@ function Admin() {
               </label>
               <label>
                 Contraseña
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
+                <div className="admin-login-password-wrap">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    autoComplete="current-password"
+                  />
+                  <button
+                    type="button"
+                    className="admin-login-password-toggle"
+                    onClick={() => setShowPassword((v) => !v)}
+                    aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                    tabIndex={-1}
+                  >
+                    {showPassword ? (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                        <line x1="1" y1="1" x2="23" y2="23" />
+                      </svg>
+                    ) : (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
               </label>
               {loginError && <p className="admin-login-error" role="alert">{loginError}</p>}
               <button type="submit">Entrar</button>
@@ -447,6 +521,54 @@ function Admin() {
             </button>
           </nav>
           <div className="admin-header-actions">
+            <div className="admin-notif-wrap" ref={notifDropdownRef}>
+              <button
+                type="button"
+                className="admin-notif-campana"
+                onClick={() => setNotifDropdownAbierto((v) => !v)}
+                aria-label={notificaciones.filter((n) => !n.leida).length ? `Notificaciones (${notificaciones.filter((n) => !n.leida).length} sin leer)` : 'Notificaciones'}
+                aria-expanded={notifDropdownAbierto}
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                </svg>
+                {notificaciones.filter((n) => !n.leida).length > 0 && (
+                  <span className="admin-notif-badge" aria-hidden>{notificaciones.filter((n) => !n.leida).length}</span>
+                )}
+              </button>
+              {notifDropdownAbierto && (
+                <div className="admin-notif-dropdown" role="menu">
+                  <div className="admin-notif-dropdown-titulo">Notificaciones</div>
+                  {notificaciones.length === 0 ? (
+                    <p className="admin-notif-vacio">No hay notificaciones</p>
+                  ) : (
+                    <ul className="admin-notif-lista">
+                      {notificaciones.map((n) => (
+                        <li key={n.id}>
+                          <button
+                            type="button"
+                            className={`admin-notif-item ${n.leida ? 'leida' : ''}`}
+                            onClick={() => {
+                              if (!n.leida) marcarNotificacionLeida(n.id).catch(() => {})
+                              setNotifDropdownAbierto(false)
+                            }}
+                            role="menuitem"
+                          >
+                            <span className="admin-notif-item-titulo">{n.titulo}</span>
+                            <span className="admin-notif-item-mensaje">{n.mensaje}</span>
+                            {n.createdAt?.toDate && (
+                              <span className="admin-notif-item-fecha">{n.createdAt.toDate().toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' })}</span>
+                            )}
+                            {!n.leida && <span className="admin-notif-item-punto" aria-hidden />}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </div>
             <span className="admin-email">{user.email}</span>
             <button type="button" className="admin-logout" onClick={signOut}>
               Cerrar sesión
@@ -510,6 +632,15 @@ function Admin() {
       <main className="admin-main">
         {seccion === 'citas' && subSeccion === 'calendario' && (
           <>
+            {errorCitasCalendario && (
+              <div className="admin-calendario-error">
+                <p>{errorCitasCalendario}</p>
+                <p className="admin-calendario-error-ayuda">Abre la consola (F12) para más detalles. Asegúrate de que las Cloud Functions estén desplegadas y que el sitio público y el admin usen el mismo proyecto Firebase.</p>
+                <button type="button" className="admin-btn-reintentar" onClick={() => { setErrorCitasCalendario(null); setRetryCalendario((k) => k + 1) }}>
+                  Reintentar
+                </button>
+              </div>
+            )}
             <div className="admin-calendario-wrap">
               <div className="admin-calendario-header">
                 <button type="button" className="admin-cal-btn" onClick={anteriorMes} aria-label="Mes anterior">
@@ -532,6 +663,7 @@ function Admin() {
                   }
                   const fechaStr = `${anio}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`
                   const tieneCita = diasConCitas.has(fechaStr)
+                  const numCitas = citasMes.filter((c) => c.fecha === fechaStr).length
                   const esHoy = fechaStr === hoyStr
                   const esPasado = fechaStr < hoyStr
                   const isSelected = selectedDate && formatFecha(selectedDate) === fechaStr
@@ -541,8 +673,10 @@ function Admin() {
                       type="button"
                       className={`admin-cal-celda ${tieneCita ? 'con-cita' : 'disponible'} ${esHoy ? 'hoy' : ''} ${esPasado ? 'pasado' : ''} ${isSelected ? 'seleccionado' : ''}`}
                       onClick={() => setSelectedDate(new Date(anio, mes, dia))}
+                      title={tieneCita ? `${numCitas} cita(s) este día` : ''}
                     >
-                      {dia}
+                      <span className="admin-cal-celda-num">{dia}</span>
+                      {tieneCita && <span className="admin-cal-celda-punto" aria-hidden title={`${numCitas} cita(s)`} />}
                     </button>
                   )
                 })}

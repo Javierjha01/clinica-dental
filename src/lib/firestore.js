@@ -9,6 +9,8 @@ export const COLLECTIONS = {
   ADMINS: 'admins',
 }
 
+export const SUBCOL_NOTIFICACIONES = 'notificaciones'
+
 export const ESTADOS_CITA = {
   ACTIVA: 'ACTIVA',
   CONFIRMADA: 'CONFIRMADA',

@@ -9,6 +9,9 @@ const cancelarCitaPorFolioFn = httpsCallable(functions, 'cancelarCitaPorFolio')
 const updateActividadesFn = httpsCallable(functions, 'updateActividades')
 const deleteExpedienteFn = httpsCallable(functions, 'deleteExpediente')
 const reagendarCitaFn = httpsCallable(functions, 'reagendarCita')
+const ensureAdminDocFn = httpsCallable(functions, 'ensureAdminDoc')
+const setAdminFcmTokenFn = httpsCallable(functions, 'setAdminFcmToken')
+const marcarNotificacionLeidaFn = httpsCallable(functions, 'marcarNotificacionLeida')
 
 /**
  * Convierte horarios "HH:mm" a formato que usa SelectorHorario: "h-min"
@@ -93,6 +96,30 @@ export async function deleteExpediente(telefono) {
 export async function reagendarCita(citaId, nuevaFecha, nuevaHora) {
   const fechaStr = typeof nuevaFecha === 'string' ? nuevaFecha : formatFecha(nuevaFecha)
   const { data } = await reagendarCitaFn({ citaId, nuevaFecha: fechaStr, nuevaHora })
+  return data
+}
+
+/**
+ * Asegura que exista el documento del admin (para recibir notificaciones en la campana). Requiere auth.
+ */
+export async function ensureAdminDoc() {
+  const { data } = await ensureAdminDocFn()
+  return data
+}
+
+/**
+ * Registra el token FCM del admin para notificaciones push. Requiere auth.
+ */
+export async function setAdminFcmToken(token) {
+  const { data } = await setAdminFcmTokenFn({ token })
+  return data
+}
+
+/**
+ * Marca una notificación como leída. Requiere auth.
+ */
+export async function marcarNotificacionLeida(notifId) {
+  const { data } = await marcarNotificacionLeidaFn({ notifId })
   return data
 }
 

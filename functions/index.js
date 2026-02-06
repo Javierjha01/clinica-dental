@@ -4,9 +4,12 @@ const admin = require('firebase-admin')
 admin.initializeApp()
 
 const db = admin.firestore()
+const messaging = admin.messaging()
 
 const COL_CITAS = 'citas'
 const COL_CONFIG = 'config'
+const COL_ADMINS = 'admins'
+const SUBCOL_NOTIFICACIONES = 'notificaciones'
 const DOC_ACTIVIDADES = 'actividades'
 const ESTADOS = { ACTIVA: 'ACTIVA', CONFIRMADA: 'CONFIRMADA', CANCELADA: 'CANCELADA', REAGENDADA: 'REAGENDADA' }
 
@@ -59,6 +62,62 @@ function slotsOcupadosPorCita(hora, duracionMinutos) {
 }
 
 const WHATSAPP_API_VERSION = 'v22.0'
+
+/** Obtiene los UIDs de todos los admins que tienen documento en admins. */
+async function getAdminUids() {
+  const snap = await db.collection(COL_ADMINS).get()
+  return snap.docs.map((d) => d.id)
+}
+
+/**
+ * Crea una notificación para cada admin y envía push FCM.
+ * @param {object} notif - { tipo, titulo, mensaje, citaId?, fechaCita?, hora? }
+ */
+async function notificarAdmins(notif) {
+  const uids = await getAdminUids()
+  if (uids.length === 0) return
+  const payload = {
+    tipo: notif.tipo || 'info',
+    titulo: notif.titulo || '',
+    mensaje: notif.mensaje || '',
+    citaId: notif.citaId || null,
+    fechaCita: notif.fechaCita || null,
+    hora: notif.hora || null,
+    leida: false,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  }
+  const message = {
+    notification: { title: payload.titulo, body: payload.mensaje },
+    data: {
+      tipo: payload.tipo,
+      citaId: notif.citaId || '',
+    },
+    android: { priority: 'high' },
+    apns: { payload: { aps: { sound: 'default' } } },
+  }
+  for (const uid of uids) {
+    const notifRef = await db.collection(COL_ADMINS).doc(uid).collection(SUBCOL_NOTIFICACIONES).add(payload)
+    const adminSnap = await db.collection(COL_ADMINS).doc(uid).get()
+    const tokens = (adminSnap.data()?.fcmTokens || []).filter(Boolean)
+    for (const token of tokens) {
+      try {
+        await messaging.send({
+          ...message,
+          token,
+          data: {
+            tipo: String(payload.tipo),
+            citaId: String(notif.citaId || ''),
+            notifId: String(notifRef.id),
+          },
+        })
+      } catch (e) {
+        if (e.code === 'messaging/invalid-registration-token' || e.code === 'messaging/registration-token-not-registered') {
+          // Opcional: quitar token del documento del admin
+        }
+      }
+    }
+  }
+}
 
 function getWhatsAppConfig() {
   const config = functions.config().whatsapp || {}
@@ -524,7 +583,99 @@ exports.getCitaPorFolio = functions.https.onCall(async (data, context) => {
 })
 
 /**
+ * Asegura que exista el documento del admin (para que reciba notificaciones en la campana).
+ * Se llama al abrir el panel; así getAdminUids() lo incluye aunque aún no tenga token FCM.
+ */
+exports.ensureAdminDoc = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Debes iniciar sesión')
+  }
+  const uid = context.auth.uid
+  const ref = db.collection(COL_ADMINS).doc(uid)
+  const snap = await ref.get()
+  if (!snap.exists) {
+    await ref.set({ fcmTokens: [] })
+  }
+  return { ok: true }
+})
+
+/**
+ * Registra el FCM token del admin para enviar notificaciones push. Requiere auth.
+ */
+exports.setAdminFcmToken = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Debes iniciar sesión')
+  }
+  const token = (data?.token || '').toString().trim()
+  if (!token) {
+    throw new functions.https.HttpsError('invalid-argument', 'Token requerido')
+  }
+  const uid = context.auth.uid
+  const ref = db.collection(COL_ADMINS).doc(uid)
+  await ref.set({ fcmTokens: admin.firestore.FieldValue.arrayUnion(token) }, { merge: true })
+  return { ok: true }
+})
+
+/**
+ * Marca una notificación como leída. Requiere auth.
+ */
+exports.marcarNotificacionLeida = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Debes iniciar sesión')
+  }
+  const notifId = (data?.notifId || '').toString().trim()
+  if (!notifId) {
+    throw new functions.https.HttpsError('invalid-argument', 'notifId requerido')
+  }
+  const uid = context.auth.uid
+  const ref = db.collection(COL_ADMINS).doc(uid).collection(SUBCOL_NOTIFICACIONES).doc(notifId)
+  const snap = await ref.get()
+  if (!snap.exists) {
+    throw new functions.https.HttpsError('not-found', 'Notificación no encontrada')
+  }
+  await ref.update({ leida: true })
+  return { ok: true }
+})
+
+/**
+ * Notifica a los admins 5 min antes de cada cita activa. Se ejecuta cada minuto.
+ */
+exports.notificarProximaCita = functions.pubsub.schedule('every 1 minutes').onRun(async () => {
+  const now = Date.now()
+  const in5Min = now + 5 * 60 * 1000
+  const windowStart = now + 4.5 * 60 * 1000
+  const windowEnd = now + 5.5 * 60 * 1000
+  const snap = await db.collection(COL_CITAS)
+    .where('estado', '!=', ESTADOS.CANCELADA)
+    .get()
+  const citasToNotify = []
+  snap.docs.forEach((doc) => {
+    const d = doc.data()
+    if (d.proximaCitaNotificada) return
+    const [y, m, day] = (d.fecha || '').split('-').map(Number)
+    const [hh, mm] = String(d.hora || '09:00').split(':').map(Number)
+    const ts = new Date(y, (m || 1) - 1, day || 1, hh || 0, mm || 0, 0, 0).getTime()
+    if (ts >= windowStart && ts < windowEnd) {
+      citasToNotify.push({ id: doc.id, ref: doc.ref, ...d })
+    }
+  })
+  for (const cita of citasToNotify) {
+    await notificarAdmins({
+      tipo: 'proxima_cita',
+      titulo: 'Cita en 5 minutos',
+      mensaje: `${cita.nombre || 'Paciente'} · ${cita.fecha} ${cita.hora}`,
+      citaId: cita.id,
+      fechaCita: cita.fecha,
+      hora: cita.hora,
+    })
+    await cita.ref.update({ proximaCitaNotificada: true })
+  }
+  return null
+})
+
+/**
  * Cancela una cita por folio (público, sin auth). Solo si la cita existe y no está ya cancelada.
+ * Notifica a los admins.
  */
 exports.cancelarCitaPorFolio = functions.https.onCall(async (data, context) => {
   const folio = (data?.folio || '').toString().trim().toUpperCase()
@@ -541,6 +692,18 @@ exports.cancelarCitaPorFolio = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError('failed-precondition', 'La cita ya está cancelada')
   }
   await doc.ref.update({ estado: ESTADOS.CANCELADA })
+  try {
+    await notificarAdmins({
+      tipo: 'cita_cancelada',
+      titulo: 'Cita cancelada',
+      mensaje: `${cita.nombre || 'Paciente'} · ${cita.fecha} ${cita.hora} (folio ${folio})`,
+      citaId: doc.id,
+      fechaCita: cita.fecha,
+      hora: cita.hora,
+    })
+  } catch (e) {
+    console.error('Error notificando cancelación:', e)
+  }
   return { ok: true }
 })
 
@@ -553,6 +716,19 @@ exports.onCitaCreada = functions.firestore
     const data = snap.data()
     const { nombre, telefono, fecha, hora, estado, folio } = data || {}
     if (estado === ESTADOS.CANCELADA || !telefono || !nombre || !fecha || !hora) return
+    const citaId = context.params.citaId
+    try {
+      await notificarAdmins({
+        tipo: 'cita_creada',
+        titulo: 'Nueva cita',
+        mensaje: `${nombre} · ${fecha} ${hora}${folio ? ` · Folio ${folio}` : ''}`,
+        citaId,
+        fechaCita: fecha,
+        hora,
+      })
+    } catch (err) {
+      console.error('Error notificando admins (nueva cita):', err.message || err)
+    }
     try {
       const config = getWhatsAppConfig()
       const hasToken = !!config.token
@@ -642,6 +818,18 @@ exports.whatsappWebhook = functions.https.onRequest(async (req, res) => {
       await enviarWhatsAppTexto(from, `Tu cita del ${formatoFechaParaWhatsApp(cita.fecha)} a las ${cita.hora} ha sido confirmada.`)
     } else if (text === '2') {
       await citaDoc.ref.update({ estado: ESTADOS.CANCELADA })
+      try {
+        await notificarAdmins({
+          tipo: 'cita_cancelada',
+          titulo: 'Cita cancelada (WhatsApp)',
+          mensaje: `${cita.nombre || 'Paciente'} · ${cita.fecha} ${cita.hora}`,
+          citaId: citaDoc.id,
+          fechaCita: cita.fecha,
+          hora: cita.hora,
+        })
+      } catch (e) {
+        console.error('Error notificando cancelación:', e)
+      }
       await enviarWhatsAppTexto(from, 'Tu cita ha sido cancelada. Si deseas reagendar, visita nuestro sitio o responde REAGENDAR.')
     } else if (text === 'REAGENDAR') {
       const config = getWhatsAppConfig()
