@@ -1,0 +1,72 @@
+.selector-horario {
+  padding: 0;
+}
+
+.selector-horario.vacio {
+  color: var(--color-texto-suave);
+  text-align: center;
+  padding: 2rem;
+}
+
+.selector-horario.vacio p {
+  margin: 0;
+}
+
+.selector-horario-titulo {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-texto);
+  margin-bottom: 0.25rem;
+}
+
+.selector-horario-fecha {
+  font-size: 0.8125rem;
+  color: var(--color-texto-suave);
+  margin-bottom: 1rem;
+  text-transform: capitalize;
+  letter-spacing: 0.02em;
+}
+
+.selector-horario-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.selector-horario .slot {
+  padding: 0.6rem 0.9rem;
+  border: 1px solid var(--color-borde);
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--color-texto);
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.selector-horario .slot:hover:not(:disabled) {
+  border-color: var(--color-azul-claro);
+  background: var(--color-azul-suave);
+  color: var(--color-azul);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(30, 90, 142, 0.12);
+}
+
+.selector-horario .slot.ocupado {
+  background: rgba(221, 228, 235, 0.5);
+  color: var(--color-texto-suave);
+  cursor: not-allowed;
+}
+
+.selector-horario .slot.seleccionado {
+  background: linear-gradient(135deg, var(--color-verde) 0%, #247a52 100%);
+  border-color: var(--color-verde);
+  color: var(--color-blanco);
+  box-shadow: 0 2px 10px rgba(45, 138, 94, 0.3);
+}
+
+.selector-horario-sin-slots {
+  margin: 1rem 0 0;
+  font-size: 0.875rem;
+  color: var(--color-texto-suave);
+}

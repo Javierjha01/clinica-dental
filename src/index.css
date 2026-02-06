@@ -1,0 +1,117 @@
+/* Variables: colores claros, confianza, limpieza (blanco, azul, verde) */
+:root {
+  --color-blanco: #ffffff;
+  --color-fondo: #f0f7fc;
+  --color-azul: #1e5a8e;
+  --color-azul-claro: #4a90c4;
+  --color-azul-suave: #e3f0f9;
+  --color-verde: #2d8a5e;
+  --color-verde-claro: #e8f5ee;
+  --color-texto: #2c3e50;
+  --color-texto-suave: #5a6c7d;
+  --color-borde: #dde4eb;
+  --sombra: 0 2px 12px rgba(30, 90, 142, 0.08);
+  --sombra-hover: 0 4px 16px rgba(30, 90, 142, 0.12);
+  --radio: 10px;
+  --fuente: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--fuente);
+  color: var(--color-texto);
+  background: var(--color-fondo);
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.5;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+/* ---- Footer global (Inicio + Admin login): no blanco ---- */
+.site-footer {
+  background: #1a3a52;
+  color: rgba(255, 255, 255, 0.85);
+  padding: 2rem 1.5rem;
+  margin-top: auto;
+}
+
+.site-footer-inner {
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.site-footer-copy {
+  font-size: 0.8rem;
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+.site-footer-contacto,
+.site-footer-enlaces {
+  font-size: 0.85rem;
+}
+
+.site-footer-link {
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.site-footer-link:hover {
+  color: var(--color-blanco);
+  text-decoration: underline;
+}
+
+.site-footer-sep {
+  opacity: 0.6;
+  user-select: none;
+}
+
+.site-footer-redes {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.site-footer-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.1);
+  transition: color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+}
+
+.site-footer-icon:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}

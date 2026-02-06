@@ -1,0 +1,283 @@
+.consultar-cita {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-fondo);
+}
+
+.consultar-cita-main {
+  flex: 1;
+  padding: 2rem 1rem;
+  max-width: 480px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.consultar-cita-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: saturate(180%) blur(12px);
+  -webkit-backdrop-filter: saturate(180%) blur(12px);
+  border-radius: 16px;
+  padding: 1.75rem;
+  box-shadow: 0 4px 24px rgba(30, 90, 142, 0.08);
+  border: 1px solid rgba(30, 90, 142, 0.12);
+  border-left: 4px solid var(--color-azul);
+}
+
+.consultar-cita-titulo {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--color-azul);
+  margin-bottom: 0.5rem;
+}
+
+.consultar-cita-intro {
+  font-size: 0.9rem;
+  color: var(--color-texto-suave);
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.consultar-cita-form {
+  margin-bottom: 1rem;
+}
+
+.consultar-cita-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-texto);
+  margin-bottom: 0.5rem;
+}
+
+.consultar-cita-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-borde);
+  border-radius: 12px;
+  font-size: 1.1rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.consultar-cita-input:focus {
+  outline: none;
+  border-color: var(--color-azul);
+  box-shadow: 0 0 0 3px rgba(30, 90, 142, 0.12);
+}
+
+.consultar-cita-boton-buscar {
+  width: 100%;
+  margin-top: 1rem;
+  padding: 0.9rem;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--color-azul) 0%, var(--color-azul-claro) 100%);
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 14px rgba(30, 90, 142, 0.3);
+}
+
+.consultar-cita-boton-buscar:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(30, 90, 142, 0.35);
+}
+
+.consultar-cita-boton-buscar:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.consultar-cita-error {
+  padding: 0.75rem 1rem;
+  background: #fef2f2;
+  color: #b91c1c;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  border: 1px solid rgba(185, 28, 28, 0.15);
+}
+
+.consultar-cita-resultado {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--color-borde);
+}
+
+.consultar-cita-resultado h2 {
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  color: var(--color-texto);
+}
+
+.consultar-cita-detalle {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.35rem 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.consultar-cita-detalle dt {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-texto-suave);
+}
+
+.consultar-cita-detalle dd {
+  font-size: 0.95rem;
+  color: var(--color-texto);
+  margin: 0;
+  text-transform: capitalize;
+}
+
+.consultar-cita-detalle dd:not(:last-child) {
+  margin-bottom: 0.25rem;
+}
+
+.consultar-cita-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+
+.consultar-cita-badge--creada,
+.consultar-cita-badge--activa {
+  background: var(--color-azul-suave);
+  color: var(--color-azul);
+}
+
+.consultar-cita-badge--confirmada {
+  background: var(--color-verde-claro);
+  color: var(--color-verde);
+}
+
+.consultar-cita-badge--cancelada {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.consultar-cita-badge--reagendada {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.consultar-cita-boton-cancelar {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #b91c1c;
+  background: transparent;
+  color: #b91c1c;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.consultar-cita-boton-cancelar:hover {
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.consultar-cita-footer {
+  text-align: center;
+  margin-top: 1.5rem;
+  font-size: 0.9rem;
+  color: var(--color-texto-suave);
+}
+
+.consultar-cita-footer a {
+  color: var(--color-azul);
+  text-decoration: none;
+}
+
+.consultar-cita-footer a:hover {
+  text-decoration: underline;
+}
+
+/* Modal confirmación */
+.consultar-cita-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(30, 90, 142, 0.2);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.consultar-cita-modal {
+  background: var(--color-blanco);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.12);
+  max-width: 380px;
+  width: 100%;
+}
+
+.consultar-cita-modal h3 {
+  font-size: 1.15rem;
+  margin-bottom: 0.5rem;
+  color: var(--color-texto);
+}
+
+.consultar-cita-modal p {
+  font-size: 0.95rem;
+  color: var(--color-texto-suave);
+  margin-bottom: 1.25rem;
+  line-height: 1.5;
+}
+
+.consultar-cita-modal-acciones {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.consultar-cita-modal-no,
+.consultar-cita-modal-si {
+  flex: 1;
+  padding: 0.75rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.consultar-cita-modal-no {
+  border: 1px solid var(--color-borde);
+  background: var(--color-blanco);
+  color: var(--color-texto);
+}
+
+.consultar-cita-modal-no:hover:not(:disabled) {
+  background: var(--color-azul-suave);
+  border-color: var(--color-azul-claro);
+  color: var(--color-azul);
+}
+
+.consultar-cita-modal-si {
+  border: none;
+  background: #b91c1c;
+  color: white;
+}
+
+.consultar-cita-modal-si:hover:not(:disabled) {
+  background: #991b1b;
+}
+
+.consultar-cita-modal-no:disabled,
+.consultar-cita-modal-si:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}

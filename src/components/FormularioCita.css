@@ -1,0 +1,148 @@
+.formulario-cita {
+  padding: 0;
+}
+
+.formulario-cita-titulo {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-texto-suave);
+  margin-bottom: 1.25rem;
+  letter-spacing: 0.02em;
+}
+
+.formulario-cita-label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-texto);
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.01em;
+}
+
+.formulario-cita-label input,
+.formulario-cita-label textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-borde);
+  border-radius: 12px;
+  color: var(--color-texto);
+  margin-top: 0.35rem;
+  background: rgba(255, 255, 255, 0.9);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.formulario-cita-label input::placeholder,
+.formulario-cita-label textarea::placeholder {
+  color: var(--color-texto-suave);
+  opacity: 0.8;
+}
+
+.formulario-cita-label input:hover,
+.formulario-cita-label textarea:hover {
+  border-color: rgba(30, 90, 142, 0.25);
+}
+
+.formulario-cita-label input:focus,
+.formulario-cita-label textarea:focus {
+  outline: none;
+  border-color: var(--color-azul);
+  box-shadow: 0 0 0 3px rgba(30, 90, 142, 0.12);
+  background: var(--color-blanco);
+}
+
+.formulario-cita-label textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.formulario-cita-select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-borde);
+  border-radius: 12px;
+  color: var(--color-texto);
+  margin-top: 0.35rem;
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.formulario-cita-select:hover {
+  border-color: rgba(30, 90, 142, 0.25);
+}
+
+.formulario-cita-select:focus {
+  outline: none;
+  border-color: var(--color-azul);
+  box-shadow: 0 0 0 3px rgba(30, 90, 142, 0.12);
+}
+
+.formulario-cita-input-otro {
+  width: 100%;
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-borde);
+  border-radius: 12px;
+  color: var(--color-texto);
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 1rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.formulario-cita-input-otro:focus {
+  outline: none;
+  border-color: var(--color-azul);
+  box-shadow: 0 0 0 3px rgba(30, 90, 142, 0.12);
+}
+
+.formulario-cita-cargando {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.9rem;
+  color: var(--color-texto-suave);
+}
+
+.formulario-cita-label + .formulario-cita-label {
+  margin-top: 1.25rem;
+}
+
+.formulario-cita-error {
+  margin-top: 1rem;
+  padding: 0.65rem 1rem;
+  background: rgba(185, 28, 28, 0.08);
+  color: #b91c1c;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  border: 1px solid rgba(185, 28, 28, 0.15);
+}
+
+.formulario-cita-boton {
+  width: 100%;
+  margin-top: 1.5rem;
+  padding: 0.9rem 1.25rem;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--color-azul) 0%, var(--color-azul-claro) 100%);
+  color: var(--color-blanco);
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  box-shadow: 0 4px 14px rgba(30, 90, 142, 0.35);
+}
+
+.formulario-cita-boton:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(30, 90, 142, 0.4);
+}
+
+.formulario-cita-boton:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.formulario-cita-boton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
